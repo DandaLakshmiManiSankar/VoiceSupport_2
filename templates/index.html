@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Live Browser Speech-to-Text - Parameter Fields</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Core Styles */
+    body { background: #f4f7f9; font-family: 'Inter', sans-serif; padding-top: 4rem; }
+    .mic-button { transition: .2s; background: linear-gradient(145deg,#6b21a8,#8b5cf6); box-shadow: 0 4px 15px rgba(0,0,0,.15); width:50px;height:50px;border-radius:9999px;display:flex;align-items:center;justify-content:center;color:white;cursor:pointer;flex-shrink:0; }
+    .mic-button:hover:not(.listening):not([disabled]) { transform: scale(1.08); }
+    .mic-button[disabled] { cursor:not-allowed; opacity:.5; background:#ccc; box-shadow:none; }
+    .listening { animation: pulse 1.4s infinite; background: linear-gradient(145deg,#dc2626,#ef4444) !important; box-shadow:0 0 0 0 rgba(220,38,38,.7); }
+    @keyframes pulse { 0%{transform:scale(1)}70%{transform:scale(1.08)}100%{transform:scale(1)} }
+
+    /* Custom Bar Styles */
+    .text-input-bar {
+      background:#fff;
+      padding:8px 12px;
+      border-radius:4px;
+      font-size:16px;
+      border:1px solid #ccc;
+      color:#777;
+      width:100%;
+      min-height:40px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      box-shadow:inset 0 1px 3px rgba(0,0,0,.05);
+      flex-grow:1;
+      text-align: left;
+      cursor:text;
+      white-space: pre-wrap;
+    }
+    .live-text { color:#1f2937; font-weight:500; }
+
+    /* Parameter field focus style */
+    .parameter-field.active-field {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+
+    .sr-only { position: absolute !important; width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+  </style>
+</head>
+<body class="p-6 min-h-screen flex items-start justify-center">
+  <div class="max-w-4xl w-full mx-auto space-y-6 bg-white p-8 rounded-2xl shadow-2xl text-center">
+    <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Voice Controlled Parameters</h1>
+
+    <hr class="my-6 border-t-2 border-gray-300">
+
+    <div class="flex flex-col items-center py-4 space-y-2">
+      <h2 class="text-xl font-semibold text-gray-700">Master Voice Control</h2>
+      <p class="text-sm text-gray-500">The central mic controls all five parameters. It will automatically advance to the next field when you say **"Next"**.</p>
+      <button id="master-mic-button" class="mic-button mt-4" onclick="toggleMasterRecording()" aria-pressed="false" aria-label="Toggle master microphone">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+      </button>
+    </div>
+
+    <section id="parameters-section" class="space-y-4 pt-4" aria-labelledby="parameters-heading">
+      <h2 id="parameters-heading" class="sr-only">Parameters (controlled by master mic)</h2>
+
+            <div class="flex items-center gap-4">
+        <h3 class="text-lg font-medium text-left text-gray-700 w-1/4 flex-shrink-0">Parameter 1</h3>
+        <div class="relative w-full flex-grow">
+          <div id="transcription-bar-2" class="text-input-bar parameter-field" onclick="setActiveField(2)" role="textbox" tabindex="0">Click to focus/edit...</div>
+          <button id="clear-btn-2" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xl" onclick="clearText(2)" aria-label="Clear Parameter 1">✕</button>
+        </div>
+      </div>
+
+            <div class="flex items-center gap-4">
+        <h3 class="text-lg font-medium text-left text-gray-700 w-1/4 flex-shrink-0">Parameter 2</h3>
+        <div class="relative w-full flex-grow">
+          <div id="transcription-bar-3" class="text-input-bar parameter-field" onclick="setActiveField(3)" role="textbox" tabindex="0">Click to focus/edit...</div>
+          <button id="clear-btn-3" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xl" onclick="clearText(3)" aria-label="Clear Parameter 2">✕</button>
+        </div>
+      </div>
+
+            <div class="flex items-center gap-4">
+        <h3 class="text-lg font-medium text-left text-gray-700 w-1/4 flex-shrink-0">Parameter 3</h3>
+        <div class="relative w-full flex-grow">
+          <div id="transcription-bar-4" class="text-input-bar parameter-field" onclick="setActiveField(4)" role="textbox" tabindex="0">Click to focus/edit...</div>
+          <button id="clear-btn-4" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xl" onclick="clearText(4)" aria-label="Clear Parameter 3">✕</button>
+        </div>
+      </div>
+
+            <div class="flex items-center gap-4">
+        <h3 class="text-lg font-medium text-left text-gray-700 w-1/4 flex-shrink-0">Parameter 4</h3>
+        <div class="relative w-full flex-grow">
+          <div id="transcription-bar-5" class="text-input-bar parameter-field" onclick="setActiveField(5)" role="textbox" tabindex="0">Click to focus/edit...</div>
+          <button id="clear-btn-5" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xl" onclick="clearText(5)" aria-label="Clear Parameter 4">✕</button>
+        </div>
+      </div>
+
+            <div class="flex items-center gap-4">
+        <h3 class="text-lg font-medium text-left text-gray-700 w-1/4 flex-shrink-0">Parameter 5</h3>
+        <div class="relative w-full flex-grow">
+          <div id="transcription-bar-6" class="text-input-bar parameter-field" onclick="setActiveField(6)" role="textbox" tabindex="0">Click to focus/edit...</div>
+          <button id="clear-btn-6" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xl" onclick="clearText(6)" aria-label="Clear Parameter 5">✕</button>
+        </div>
+      </div>
+
+    </section>
+
+    <div class="text-center pt-4">
+      <p id="status-message" class="text-sm text-gray-600 font-semibold"></p>
+    </div>
+  </div>
+
+<script>
+let recognizer = null;
+let isListening = false;
+let silenceTimer = null;
+const SILENCE_TIMEOUT_MS = 5000; // 5s silence -> auto-stop
+
+const START_FIELD = 2; // Parameters start at field 2
+const totalFields = 6;
+const finalTranscripts = {2: '', 3: '', 4: '', 5: '', 6: ''};
+let currentSpeechText = '';
+let activeField = START_FIELD; // default focus is first parameter field
+
+const STATUS_MSG_DEFAULT = "Click the central mic to start recording on Parameter 1. Say 'Next' to auto-advance.";
+const NEXT_COMMANDS = ["next","move to next", "next field", "field next"];
+
+function getElements(fieldNum) {
+  return {
+    micButton: document.getElementById('master-mic-button'),
+    transBar: document.getElementById(`transcription-bar-${fieldNum}`),
+  };
+}
+
+const statusMsg = document.getElementById('status-message');
+
+function autoPunctuate(text) {
+  let result = text;
+  result = result.replace(/\bcomma\b/gi, ", ");
+  result = result.replace(/\bkama\b/gi, ", ");
+  result = result.replace(/\bfull stop\b/gi, ". ");
+  result = result.replace(/\bpoint\b/gi, ". ");
+  result = result.replace(/\bdot\b/gi, ". ");
+  result = result.replace(/\bslash\b/gi, "/");
+  result = result.replace(/\bbackward slash\b/gi, "\\");
+  result = result.replace(/\bcolum\b/gi, ":");
+  result = result.replace(/\bcolon\b/gi, ":");
+  result = result.replace(/\bsemicolon\b/gi, ";");
+  result = result.replace(/\bSemi colon\b/gi, ";");
+  result = result.replace(/\bdash\b/gi, "-");
+  result = result.replace(/\bhyphen\b/gi, "-");
+  result = result.replace(/\bquestion mark\b/gi, "?");
+  result = result.replace(/\bexclamation mark\b/gi, "!");
+  result = result.replace(/(\.|\,){2,}/g, '$1');
+  result = result.replace(/ {2,}/g, " ");
+  return result.trim();
+}
+
+function convertWordsToNumbers(text) {
+  let result = text;
+  const numWords = {
+    'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5',
+    'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'oh': '0',
+  };
+  for (const word in numWords) {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    result = result.replace(regex, numWords[word]);
+  }
+  result = result.replace(/\b1\s+hundred\b/gi, '100');
+  result = result.replace(/\b1\s+thousand\b/gi, '1000');
+  result = result.replace(/\b1\s+million\b/gi, '1000000');
+  result = result.replace(/\bhundred\b/gi, '100');
+  result = result.replace(/\bthousand\b/gi, '1000');
+  return result.trim();
+}
+
+function updateFieldState(fieldNum, isCurrent) {
+  const { transBar } = getElements(fieldNum);
+
+  document.querySelectorAll('.parameter-field').forEach(el => el.classList.remove('active-field'));
+  if (isCurrent) {
+    transBar.classList.add('active-field');
+  }
+
+  const currentText = finalTranscripts[fieldNum];
+  if (currentText) {
+    transBar.textContent = currentText;
+    transBar.classList.add('live-text');
+  } else if (isCurrent && isListening) {
+    // Text is updated in recognizer.onresult
+  } else {
+    transBar.textContent = "Click to focus/edit...";
+    transBar.classList.remove('live-text');
+  }
+}
+
+function initializeSpeechRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    for (let i = START_FIELD; i <= totalFields; i++) {
+      document.getElementById(`transcription-bar-${i}`).textContent = "Error: Web Speech Recognition API not supported in this browser.";
+    }
+    document.getElementById('master-mic-button').disabled = true;
+    statusMsg.textContent = "Please use Chrome or Edge for this feature.";
+    return null;
+  }
+
+  recognizer = new SR();
+  recognizer.continuous = true;
+  recognizer.interimResults = true;
+  recognizer.lang = "en-US";
+
+  for (let i = START_FIELD; i <= totalFields; i++) {
+    updateFieldState(i, i === activeField);
+  }
+  statusMsg.textContent = STATUS_MSG_DEFAULT;
+
+  recognizer.onresult = (e) => {
+    
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => {
+      if (isListening) recognizer.stop();
+    }, SILENCE_TIMEOUT_MS);
+
+    let interimTranscript = '';
+    let finalTranscriptSegment = '';
+
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      let transcript = e.results[i][0].transcript;
+      transcript = transcript.replace(/[.,!?:;]$/, '').trim();
+      if (e.results[i].isFinal) {
+        finalTranscriptSegment += transcript + ' ';
+      } else {
+        interimTranscript += transcript+ ' ';
+      }
+    }
+
+    // NEXT command for parameter fields
+    if (activeField < totalFields && finalTranscriptSegment) {
+      let commandFound = false;
+      NEXT_COMMANDS.forEach(cmd => {
+        if (new RegExp(`\\b${cmd}\\b`, 'gi').test(finalTranscriptSegment)) {
+          commandFound = true;
+        }
+      });
+
+      if (commandFound) {
+        currentSpeechText += finalTranscriptSegment;
+        recognizer.stop(); // onend will handle moving to next field
+        return;
+      }
+    }
+
+    currentSpeechText += finalTranscriptSegment;
+
+    const prefix = finalTranscripts[activeField].trim();
+    const currentSessionText = (currentSpeechText + ' ' + interimTranscript).trim();
+    const fullTranscript = prefix ? `${prefix} ${currentSessionText}` : currentSessionText;
+
+    if (fullTranscript) {
+      let displayTranscript = autoPunctuate(fullTranscript);
+      getElements(activeField).transBar.textContent = displayTranscript;
+      getElements(activeField).transBar.classList.add('live-text');
+    }
+  };
+
+  recognizer.onend = () => {
+    isListening = false;
+    getElements(activeField).micButton.classList.remove("listening");
+    clearTimeout(silenceTimer);
+
+    let newFinalText = currentSpeechText.trim();
+    let containsNextCommand = false;
+
+    if (activeField < totalFields) {
+      NEXT_COMMANDS.forEach(cmd => {
+        const regex = new RegExp(`\\b${cmd}\\b`, 'gi');
+        if (regex.test(newFinalText)) {
+          containsNextCommand = true;
+          newFinalText = newFinalText.replace(regex, '').trim();
+        }
+      });
+    }
+
+    let finalQuery = (finalTranscripts[activeField] + ' ' + newFinalText).trim();
+    finalQuery = autoPunctuate(convertWordsToNumbers(finalQuery)).trim();
+    
+    // Remove trailing punctuation for parameter fields
+    const trailingPunctuationRegex = /[.,;!]$/;
+    while (trailingPunctuationRegex.test(finalQuery)){
+      finalQuery = finalQuery.substring(0, finalQuery.length - 1).trim();
+    }
+
+    currentSpeechText = '';
+    finalTranscripts[activeField] = finalQuery;
+
+    updateFieldState(activeField, activeField === activeField);
+    if (finalQuery) {
+      statusMsg.textContent = `Field ${activeField - START_FIELD + 1} complete. Final text saved.`;
+    } else {
+      statusMsg.textContent = `No new speech detected for Field ${activeField - START_FIELD + 1}. Tap mic to speak.`;
+    }
+
+    sendToServer(activeField, finalQuery);
+
+    if (containsNextCommand) {
+      handleNextField();
+    } else if (activeField === totalFields) {
+      statusMsg.textContent = "✅ Last parameter field complete. You can click any mic or text box to edit a field.";
+    }
+  };
+
+  recognizer.onerror = (e) => {
+    isListening = false;
+    getElements(activeField).micButton.classList.remove("listening");
+    clearTimeout(silenceTimer);
+    statusMsg.textContent = `⚠️ Error in Field ${activeField}: ${e.error}. Try granting microphone access and refreshing.`;
+    console.error("Speech Recognition Error:", e.error);
+    updateFieldState(activeField, activeField === activeField);
+    currentSpeechText = '';
+  };
+
+  return recognizer;
+}
+
+function handleNextField() {
+  if (activeField < totalFields) {
+    updateFieldState(activeField, false);
+    activeField += 1;
+    updateFieldState(activeField, true);
+    statusMsg.textContent = `➡️ Moved to Field ${activeField - START_FIELD + 1}. Mic automatically activated.`;
+    // Auto-start the new field
+    setTimeout(() => startRecording(), 120);
+  } else {
+    statusMsg.textContent = "✅ All parameter fields complete! Click the mic or a text box to switch fields.";
+  }
+}
+
+window.setActiveField = function(fieldNum) {
+  if (isListening) {
+    recognizer.stop();
+  }
+  updateFieldState(activeField, false);
+  activeField = fieldNum;
+  updateFieldState(activeField, true);
+  statusMsg.textContent = `Focus switched to Field ${fieldNum - START_FIELD + 1}. Click the central mic to start recording.`;
+}
+
+// Master mic toggler
+window.toggleMasterRecording = function() {
+  if (!recognizer || getElements(activeField).micButton.disabled) return;
+  if (isListening) {
+    recognizer.stop();
+    return;
+  }
+  startRecording();
+};
+
+function startRecording() {
+  try {
+    if (!recognizer) return;
+    
+    recognizer.continuous = true;
+    currentSpeechText = '';
+    const { micButton, transBar } = getElements(activeField);
+    const previousText = finalTranscripts[activeField].trim();
+    transBar.textContent = previousText ? `${previousText} Listening...` : "Listening...";
+    transBar.classList.add('live-text');
+    recognizer.start();
+    isListening = true;
+    micButton.classList.add("listening");
+
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => {
+      if (isListening) recognizer.stop();
+    }, SILENCE_TIMEOUT_MS);
+
+    let commandHint;
+    if (activeField < totalFields) {
+      commandHint = `. Say 'Move to next' or 'Next' to jump to Parameter ${activeField - START_FIELD + 2}. Allows ${SILENCE_TIMEOUT_MS/1000}s silence.`;
+    } else {
+      commandHint = `. Final parameter field. Allows ${SILENCE_TIMEOUT_MS/1000}s silence.`;
+    }
+    statusMsg.textContent = `🎤 Field ${activeField - START_FIELD + 1}: Speak now...${commandHint}`;
+  } catch (e) {
+    console.error("Start error:", e);
+    statusMsg.textContent = `⚠️ Error starting mic for Field ${activeField - START_FIELD + 1}. Check permissions or refresh.`;
+  }
+}
+
+window.clearText = function(fieldNum) {
+  if (isListening && fieldNum === activeField) {
+    recognizer.stop();
+  }
+  finalTranscripts[fieldNum] = '';
+  currentSpeechText = '';
+  updateFieldState(fieldNum, fieldNum === activeField);
+  statusMsg.textContent = `Text for Field ${fieldNum - START_FIELD + 1} cleared.`;
+  sendToServer(fieldNum, '');
+};
+
+function sendToServer(field, text) {
+  // Sending to app.py on port 5002
+  const dataToSend ={
+    field: field,
+    text: text
+  };
+  fetch('/save_transcript', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(dataToSend)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log(`[Server] Field ${field} saved successfully.`);
+    } else {
+      console.error(`[Server Error] Failed to save field ${field}:`, data.message);
+    }
+  })
+  .catch((error) => {
+    console.error('[Fetch Error]: Could not reach server to save transcript.', error);
+  });
+  console.log(`[Simulated Server Call] Field: ${field}, Text: "${text}"`);
+}
+
+// Initialize on load
+initializeSpeechRecognition();
+</script>
+</body>
+</html>
